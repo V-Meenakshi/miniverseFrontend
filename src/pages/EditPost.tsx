@@ -280,7 +280,7 @@ const EditPost = () => {
             </div>
 
             {/* Image Upload */}
-            <div className="mb-6">
+            {/* <div className="mb-6">
               <label htmlFor="image" className="flex items-center space-x-2 text-sm font-medium text-[#b0b3c5] mb-2">
                 <FileText className="w-4 h-4" />
                 <span>Image (Optional)</span>
@@ -298,7 +298,7 @@ const EditPost = () => {
                   file:bg-violet-50 file:text-violet-700
                   hover:file:bg-violet-100"
               />
-            </div>
+            </div> */}
 
             {/* Content */}
             <div className="mb-6">
@@ -324,23 +324,23 @@ const EditPost = () => {
                 className="w-full px-4 py-3 bg-[#0d0f1f]/60 border border-[#1f2335] rounded-xl text-white placeholder-[#b0b3c5] focus:outline-none focus:ring-2 focus:ring-[#6c63ff] focus:border-transparent transition-all resize-none font-mono text-sm leading-relaxed"
                 placeholder="Write your story here... 
 
-💡 Tips for better formatting:
-• Use numbered lists: 1. First item, 2. Second item
-• Use bullet points: • Item 1, • Item 2  
-• Add line breaks for better readability
-• Use **bold** and *italic* for emphasis
-• Separate paragraphs with blank lines
+                  💡 Tips for better formatting:
+                  • Use numbered lists: 1. First item, 2. Second item
+                  • Use bullet points: • Item 1, • Item 2  
+                  • Add line breaks for better readability
+                  • Use **bold** and *italic* for emphasis
+                  • Separate paragraphs with blank lines
 
-Example:
-1. This is a numbered list
-2. Each item on a new line
-3. Easy to read and follow
+                  Example:
+                  1. This is a numbered list
+                  2. Each item on a new line
+                  3. Easy to read and follow
 
-• This is a bullet point
-• Another bullet point
-• Clean and organized
+                  • This is a bullet point
+                  • Another bullet point
+                  • Clean and organized
 
-Your content will be automatically formatted for better readability!"
+                  Your content will be automatically formatted for better readability!"
                 required
               />
               <div className="flex items-center justify-between mt-2">

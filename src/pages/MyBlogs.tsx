@@ -168,11 +168,11 @@ const MyBlogs = () => {
           </button>
         </div>
 
-        <div className="flex justify-center space-x-2 mb-8">
+        {/* <div className="flex justify-center space-x-2 mb-8">
           <button onClick={() => setPrivacyFilter('all')} className={privacyFilter === 'all' ? 'active-filter' : 'filter-button'}>All</button>
           <button onClick={() => setPrivacyFilter('public')} className={privacyFilter === 'public' ? 'active-filter' : 'filter-button'}>Public</button>
           <button onClick={() => setPrivacyFilter('private')} className={privacyFilter === 'private' ? 'active-filter' : 'filter-button'}>Private</button>
-        </div>
+        </div> */}
 
         <div className="flex flex-col sm:flex-row gap-4 mb-8">
           <div className="relative flex-1">
