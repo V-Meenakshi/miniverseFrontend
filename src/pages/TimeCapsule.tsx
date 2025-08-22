@@ -233,7 +233,7 @@ const TimeCapsule = () => {
             <h3 className="text-2xl font-bold text-white mb-4">No Time Capsules Found</h3>
             <p className="text-[#b0b3c5] mb-8">
               {filter === 'sealed' && 'No sealed capsules waiting to be opened.'}
-              {filter === 'opened' && 'No capsules have been opened yet.'}
+              {filter === 'opened' && 'You can check out all your published Time Capsules in the All Blogs or My Blogs section.'}
               {filter === 'all' && (isAuthenticated 
                 ? 'No time capsules exist yet. Create your first one!'
                 : 'No time capsules have been revealed yet.'
