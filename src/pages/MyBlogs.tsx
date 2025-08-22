@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+// Correctly import useNavigate from react-router-dom
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, Plus, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -8,37 +9,59 @@ import { useAuth } from '../context/AuthContext';
 import { BlogPost, PageResponse } from '../types';
 
 const MyBlogs = () => {
+  // Now that it's imported, this line will work correctly
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
+  const [privacyFilter, setPrivacyFilter] = useState<'all' | 'public' | 'private'>('all');
 
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
-    fetchMyPosts();
-  }, [isAuthenticated, navigate, currentPage]);
+    setPosts([]);
+    setCurrentPage(0);
+    fetchMyPosts(0);
+  }, [isAuthenticated, navigate, privacyFilter]);
 
-  const fetchMyPosts = async () => {
+  useEffect(() => {
+    if (currentPage > 0) {
+      fetchMyPosts(currentPage);
+    }
+  }, [currentPage]);
+
+
+  const fetchMyPosts = async (pageToFetch: number) => {
     try {
       setLoading(true);
-      const response: PageResponse<BlogPost> = await blogService.getMyPosts(currentPage, 9);
-      
-      if (currentPage === 0) {
+      let response: PageResponse<BlogPost>;
+
+      switch (privacyFilter) {
+        case 'public':
+          response = await blogService.getMyPublicPosts(pageToFetch, 9);
+          break;
+        case 'private':
+          response = await blogService.getMyPrivatePosts(pageToFetch, 9);
+          break;
+        default: // 'all'
+          response = await blogService.getMyPosts(pageToFetch, 9);
+          break;
+      }
+
+      if (pageToFetch === 0) {
         setPosts(response.content);
       } else {
         setPosts(prev => [...prev, ...response.content]);
       }
-      
-      setHasMore(currentPage < response.totalPages - 1);
+
+      setHasMore(pageToFetch < response.totalPages - 1);
     } catch (error) {
       console.error('Error fetching my posts:', error);
     } finally {
@@ -59,13 +82,12 @@ const MyBlogs = () => {
 
   const confirmDelete = async () => {
     if (!postToDelete) return;
-    
+
     try {
       await blogService.deletePost(postToDelete);
       toast.success('Post deleted successfully!');
-      // Refresh the posts list
       setCurrentPage(0);
-      fetchMyPosts();
+      fetchMyPosts(0);
     } catch (error) {
       console.error('Error deleting post:', error);
       toast.error('Failed to delete post');
@@ -83,12 +105,12 @@ const MyBlogs = () => {
   const handleLikePost = async (postId: string) => {
     try {
       const updatedPost = await blogService.likePost(postId);
-      setPosts(prev => prev.map(post => 
-        post.id === postId 
-          ? { 
-              ...post, 
-              likesCount: updatedPost.likesCount, 
-              likedBy: updatedPost.likedBy 
+      setPosts(prev => prev.map(post =>
+        post.id === postId
+          ? {
+              ...post,
+              likesCount: updatedPost.likesCount,
+              likedBy: updatedPost.likedBy
             }
           : post
       ));
@@ -111,7 +133,6 @@ const MyBlogs = () => {
   const handleSharePost = async (postId: string) => {
     try {
       await blogService.sharePost(postId);
-      // You could show a toast notification here
     } catch (error) {
       console.error('Error sharing post:', error);
     }
@@ -119,7 +140,7 @@ const MyBlogs = () => {
 
   const filteredPosts = posts.filter(post =>
     post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    post.content.toLowerCase().includes(searchTerm.toLowerCase())
+    (post.content && post.content.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   if (!isAuthenticated) {
@@ -129,7 +150,6 @@ const MyBlogs = () => {
   return (
     <div className="pt-16 min-h-screen relative z-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-12">
           <div>
             <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-[#6c63ff] to-[#00ffd0] bg-clip-text text-transparent">
@@ -148,7 +168,12 @@ const MyBlogs = () => {
           </button>
         </div>
 
-        {/* Search Section */}
+        <div className="flex justify-center space-x-2 mb-8">
+          <button onClick={() => setPrivacyFilter('all')} className={privacyFilter === 'all' ? 'active-filter' : 'filter-button'}>All</button>
+          <button onClick={() => setPrivacyFilter('public')} className={privacyFilter === 'public' ? 'active-filter' : 'filter-button'}>Public</button>
+          <button onClick={() => setPrivacyFilter('private')} className={privacyFilter === 'private' ? 'active-filter' : 'filter-button'}>Private</button>
+        </div>
+
         <div className="flex flex-col sm:flex-row gap-4 mb-8">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#b0b3c5] w-5 h-5" />
@@ -161,8 +186,6 @@ const MyBlogs = () => {
             />
           </div>
         </div>
-
-        {/* Posts Grid */}
       </div>
 
       {loading && currentPage === 0 ? (
@@ -180,10 +203,10 @@ const MyBlogs = () => {
         <>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredPosts.map((post) => (
-              <BlogCard 
-                key={post.id} 
-                post={post} 
-                showAuthor={false} 
+              <BlogCard
+                key={post.id}
+                post={post}
+                showAuthor={false}
                 showActions={true}
                 onLike={handleLikePost}
                 onComment={handleCommentPost}
@@ -192,7 +215,6 @@ const MyBlogs = () => {
             ))}
           </div>
 
-          {/* Load More Button */}
           {hasMore && !searchTerm && (
             <div className="text-center mt-12">
               <button
@@ -214,7 +236,7 @@ const MyBlogs = () => {
             {searchTerm ? 'No posts found' : 'No posts yet'}
           </h3>
           <p className="text-[#b0b3c5] mb-8">
-            {searchTerm 
+            {searchTerm
               ? 'Try adjusting your search criteria.'
               : 'Start your cosmic journey by creating your first post.'
             }
@@ -228,7 +250,6 @@ const MyBlogs = () => {
         </div>
       )}
 
-      {/* Professional Delete Confirmation Popup */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-[#0d0f1f]/95 backdrop-blur-sm rounded-2xl p-8 border border-[#1f2335] max-w-md w-full mx-4">

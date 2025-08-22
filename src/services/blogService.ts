@@ -16,6 +16,40 @@ class BlogService {
     return response.data;
   }
 
+  // --- NEW METHODS START HERE ---
+
+  /**
+   * Fetches only the current user's time capsules (SCHEDULED posts).
+   */
+  async getMyTimeCapsules(page = 0, size = 10): Promise<Page<BlogPost>> {
+    const response = await api.get('/posts/time-capsules', { // Correct endpoint
+      params: { page, size, sort: 'publishAt,asc' }
+    });
+    return response.data;
+  }
+
+  /**
+   * Fetches only the current user's PUBLIC posts.
+   */
+  async getMyPublicPosts(page = 0, size = 10): Promise<Page<BlogPost>> {
+    const response = await api.get('/posts/me/public', { // Correct endpoint
+      params: { page, size, sort: 'createdAt,desc' }
+    });
+    return response.data;
+  }
+
+  /**
+   * Fetches only the current user's PRIVATE posts.
+   */
+  async getMyPrivatePosts(page = 0, size = 10): Promise<Page<BlogPost>> {
+    const response = await api.get('/posts/me/private', { // Correct endpoint
+      params: { page, size, sort: 'createdAt,desc' }
+    });
+    return response.data;
+  }
+
+  // --- NEW METHODS END HERE ---
+
   async getPostById(id: string): Promise<BlogPost> {
     const response = await api.get(`/posts/${id}`);
     return response.data;
@@ -59,7 +93,6 @@ class BlogService {
     if (navigator.share) {
       try {
         const post = await this.getPostById(postId);
-        // Share only URL and title so platforms treat it as a clickable link
         await navigator.share({
           title: post.title,
           url

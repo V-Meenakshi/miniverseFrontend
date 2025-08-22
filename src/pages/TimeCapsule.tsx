@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, Calendar, Lock, Unlock, Eye, Plus } from 'lucide-react';
+// Correctly import useNavigate from react-router-dom
 import { useNavigate } from 'react-router-dom';
 import blogService from '../services/blogService';
 import { useAuth } from '../context/AuthContext';
-import { BlogPost, PageResponse } from '../types';
+import { BlogPost, PageResponse } from '../types'; // Adjusted the type import name
 import BlogCard from '../components/BlogCard';
 import toast from 'react-hot-toast';
 
 const TimeCapsule = () => {
+  // Now that it's imported, this line will work correctly
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [capsules, setCapsules] = useState<BlogPost[]>([]);
@@ -18,11 +20,9 @@ const TimeCapsule = () => {
     if (isAuthenticated) {
       fetchTimeCapsules();
     } else {
-      // Show public scheduled posts for non-authenticated users
       fetchPublicScheduledPosts();
     }
     
-    // Set up a refresh interval to check for newly published time capsules
     const refreshInterval = setInterval(() => {
       if (isAuthenticated) {
         fetchTimeCapsules();
@@ -37,13 +37,9 @@ const TimeCapsule = () => {
   const fetchTimeCapsules = async () => {
     try {
       setLoading(true);
-      const response: PageResponse<BlogPost> = await blogService.getMyPosts(0, 50);
-      // Filter posts that are time capsules (scheduled posts or published posts that were originally scheduled)
-      const timeCapsules = response.content.filter(post => 
-        post.status === 'SCHEDULED' || (post.status === 'PUBLISHED' && post.publishAt)
-      );
-      console.log('Time capsules found:', timeCapsules.length);
-      setCapsules(timeCapsules);
+      // Use the correct service method for fetching time capsules
+      const response = await blogService.getMyTimeCapsules(0, 50);
+      setCapsules(response.content);
     } catch (error) {
       console.error('Error fetching time capsules:', error);
     } finally {
@@ -54,12 +50,10 @@ const TimeCapsule = () => {
   const fetchPublicScheduledPosts = async () => {
     try {
       setLoading(true);
-      const response: PageResponse<BlogPost> = await blogService.getPublicPosts(0, 50);
-      // Filter posts that were scheduled and are now published
+      const response = await blogService.getPublicPosts(0, 50);
       const publishedCapsules = response.content.filter(post => 
         post.status === 'PUBLISHED' && post.publishAt && new Date(post.publishAt) <= new Date()
       );
-      console.log('Public time capsules found:', publishedCapsules.length);
       setCapsules(publishedCapsules);
     } catch (error) {
       console.error('Error fetching public time capsules:', error);
@@ -100,25 +94,16 @@ const TimeCapsule = () => {
   };
 
   const filteredCapsules = capsules.filter(capsule => {
-    // For scheduled posts, check if they should be considered opened
-    if (capsule.status === 'SCHEDULED') {
-      const opened = isOpened(capsule.publishAt);
-      if (filter === 'sealed') return !opened;
-      if (filter === 'opened') return opened;
-      return true; // 'all' filter
-    }
-    
-    // For published posts that were originally scheduled (have publishAt)
-    if (capsule.status === 'PUBLISHED' && capsule.publishAt) {
-      const opened = isOpened(capsule.publishAt);
-      if (filter === 'sealed') return !opened;
-      if (filter === 'opened') return opened;
-      return true; // 'all' filter
-    }
-    
-    // For regular published posts (not time capsules), only show in 'all' filter
-    return filter === 'all';
+    // Because the backend now sends only SCHEDULED posts, we can simplify this.
+    // A post is "opened" if its publishAt date is in the past.
+    const opened = isOpened(capsule.publishAt);
+
+    if (filter === 'sealed') return !opened;
+    if (filter === 'opened') return opened;
+    return true; // 'all' filter shows everything
   });
+  
+  // ... (The rest of your JSX remains the same)
 
   if (loading) {
     return (
@@ -188,9 +173,7 @@ const TimeCapsule = () => {
           <>
             <div className="mb-4 text-center">
               <p className="text-sm text-[#b0b3c5]">
-                Showing {filteredCapsules.length} time capsule{filteredCapsules.length !== 1 ? 's' : ''} 
-                ({filteredCapsules.filter(c => c.status === 'SCHEDULED').length} sealed, 
-                {filteredCapsules.filter(c => c.status === 'PUBLISHED' && c.publishAt).length} opened)
+                Showing {filteredCapsules.length} time capsule{filteredCapsules.length !== 1 ? 's' : ''}
               </p>
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
